@@ -66,6 +66,8 @@ function mouseDown(ev) {
 function mouseUp(ev) {
     isDrawing = false;
     endPos = getMousePos(canvas,ev);
+
+
     velocityX = 0.5*(endPos[0] - startPos[0]);
     velocityY = 10*(endPos[1] - startPos[1]);
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
@@ -74,6 +76,14 @@ function mouseUp(ev) {
     var particle = startPos;
     currentPos[0] = startPos[0];
     move = true;
+
+    particles.push(
+        {
+            currentPos: vec2(currentPos[0], currentPos[1]),
+            velocity: vec2(velocityX, velocityY), 
+            startPos: startPos,
+            time: 0
+        });
 }
 
 function mouseMove(ev) {
@@ -95,13 +105,16 @@ function render() {
         
     }
 
-    if (move)
+    //if (move)
+     //   moveParticle();
+
+     if (particles.length != 0)
         moveParticle();
     
     
     requestAnimFrame(render);
 }
-
+/*
 function moveParticle()
 {
         currentPos[0] += 0.1 * velocityX;
@@ -112,4 +125,29 @@ function moveParticle()
         gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
         gl.drawArrays(gl.POINTS, 0, 2);
             
+}*/
+
+function moveParticle()
+{
+    for (var i = 0; i < particles.length; i++)
+    {
+        var p = particles[i];
+        p.currentPos[0] += 0.1 * p.velocity[0];
+        p.currentPos[1] = 
+        p.startPos[1] + p.velocity[1]*p.time
+         + -1/2 * 10 * Math.pow(p.time, 2);
+        //console.log(particles[i]);
+        p.time += 0.005;
+        gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(p.currentPos));
+        gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.POINTS, 0, 2);
+        if( p.currentPos[0] < -1 || p.currentPos[1] < -1 || p.currentPos[0] > 1)
+        {
+            particles.splice(i,1);
+            console.log(particles.length)
+        }
+            
+        
+    }
 }
