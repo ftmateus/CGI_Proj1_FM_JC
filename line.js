@@ -2,18 +2,11 @@ var gl;
 var canvas;
 var bufferId;
 var vPosition;
-var move = false;
 var startPos;
 var endPos;
 var isDrawing = false;
-var velocityX;
-var velocityY;
-var velocity = vec2(0,0);
-//var currentPosX;
-//var currentPosY;
 var currentPos = vec2(0,0);
-var time = 0;
-var particles;
+var particles = [];
 
 
 window.onload = function init() {
@@ -41,7 +34,6 @@ window.onload = function init() {
     canvas.addEventListener("mouseup",mouseUp);
     canvas.addEventListener("mousemove",mouseMove);
 
-    particles = [];
     render();
 }
 
@@ -72,8 +64,7 @@ function mouseUp(ev) {
     velocityY = 10*(endPos[1] - startPos[1]);
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
     gl.bufferSubData(gl.ARRAY_BUFFER, 8, flatten(endPos));
-    
-    var particle = startPos;
+
     currentPos[0] = startPos[0];
     move = true;
 
@@ -90,7 +81,7 @@ function mouseMove(ev) {
     endPos = getMousePos(canvas, ev);
     
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 8, flatten(endPos));   
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten([startPos,endPos]));   
 }
 
 
@@ -105,29 +96,14 @@ function render() {
         
     }
 
-    //if (move)
-     //   moveParticle();
-
      if (particles.length != 0)
-        moveParticle();
+        moveParticles();
     
     
     requestAnimFrame(render);
 }
-/*
-function moveParticle()
-{
-        currentPos[0] += 0.1 * velocityX;
-        currentPos[1] = startPos[1] + velocityY*time + -1/2 * 10 * Math.pow(time, 2);
-        time += 0.005;
-        gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
-        gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(currentPos));
-        gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
-        gl.drawArrays(gl.POINTS, 0, 2);
-            
-}*/
 
-function moveParticle()
+function moveParticles()
 {
     for (var i = 0; i < particles.length; i++)
     {
@@ -142,7 +118,7 @@ function moveParticle()
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(p.currentPos));
         gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
         gl.drawArrays(gl.POINTS, 0, 2);
-        if( p.currentPos[0] < -1 || p.currentPos[1] < -1 || p.currentPos[0] > 1)
+        if(particleOutOfRange(p))
         {
             particles.splice(i,1);
             console.log(particles.length)
@@ -150,4 +126,9 @@ function moveParticle()
             
         
     }
+}
+
+function particleOutOfRange(p)
+{
+    return p.currentPos[0] < -1 || p.currentPos[1] < -1 || p.currentPos[0] > 1;
 }
