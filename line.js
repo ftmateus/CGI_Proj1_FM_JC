@@ -7,10 +7,15 @@ var endPos;
 var isDrawing = false;
 var currentPos = vec2(0,0);
 var particlesInMov = [];
+var speed;
+var startPosLoc;
+var isParticle;
+var time;
+
 
 
 window.onload = function init() {
-    
+
     canvas = document.getElementById("gl-canvas");
     gl = WebGLUtils.setupWebGL(canvas);
     if(!gl) { alert("WebGL isn't available"); }
@@ -29,6 +34,13 @@ window.onload = function init() {
     vPosition = gl.getAttribLocation(program, "vPosition");
     gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vPosition);
+
+    speed = gl.getUniformLocation(program, "speed");
+    startPosLoc = gl.getUniformLocation(program, "startPos");
+    isParticle = gl.getUniformLocation(program, "isParticle");
+    time = gl.getUniformLocation(program, "time");
+
+
     
     canvas.addEventListener("mousedown",mouseDown);
     canvas.addEventListener("mouseup",mouseUp);
@@ -71,7 +83,9 @@ function mouseUp(ev) {
             currentPos: vec2(currentPos[0], currentPos[1]),
             speed: vec2(speedX, speedY), 
             startPos: startPos,
-            time: 0
+            time: 0,
+            speedBefore: 0,
+            exploded: false
         });
 }
 
@@ -92,7 +106,6 @@ function render() {
     if (particlesInMov.length != 0)
         moveParticles();
     
-    
     requestAnimFrame(render);
 }
 
@@ -101,31 +114,87 @@ function drawLine()
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten([startPos,endPos]));  
     gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
-    gl.drawArrays(gl.LINES, 0, 2);   
+    gl.drawArrays(gl.LINES, 0, 2); 
+
+    lineDrawn = true;
 }
 
 function moveParticles()
 {
+    
     for (var i = 0; i < particlesInMov.length; i++)
     {
+/*
         var p = particlesInMov[i];
         p.currentPos[0] += 0.1 * p.speed[0];
         p.currentPos[1] = 
-        p.startPos[1] + p.speed[1]*p.time
-         + -1/2 * 10 * Math.pow(p.time, 2);
+                            p.startPos[1] + p.speed[1]*p.time
+                            + -1/2 * 10 * Math.pow(p.time, 2);
+                            */
+                           
+        gl.uniform2fv(speed, p.speed);
+        gl.uniform1f(isParticle, true);
+        gl.uniform2fv(startPosLoc, p.startPos);
+        gl.uniform1f(time, p.time);
+
+        
+        
+        if(p.speedBefore == 0)
+            p.speedBefore = -1 + 2 * (canvas.height-p.currentPos[1])/canvas.height;
+
+        if(-1 + 2 * (canvas.height-p.currentPos[1])/canvas.height > p.speedBefore && p.exploded == false){
+            p.exploded = true;
+            explosion(p);
+        }
+
+        p.speedBefore = -1 + 2 * (canvas.height-p.currentPos[1])/canvas.height;
+                            
         p.time += 0.005;
         gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(p.currentPos));
         gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
         gl.drawArrays(gl.POINTS, 0, 2);
+
         if(particleOutOfRange(p))
         {
             particlesInMov.splice(i,1);
-            console.log(particlesInMov.length)
-        }
-            
-        
+            //console.log(particlesInMov.length)
+        }         
     }
+}
+
+function explosion(p){
+    var idx = particlesInMov.indexOf(p)
+    particlesInMov.splice(idx, 1);
+
+    var explosionParticles = [];
+    var count = Math.ceil(Math.random() * (250 /*max*/ - 10 /*min*/) + 10 /*min*/);
+    var partPos = vec2(p.currentPos[0], p.currentPos[1]);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
+    console.log(count)
+    while(count --){
+        
+        speedX = Math.random()*.1;
+        if(Math.random()> .5)
+            speedX = -speedX;
+        speedY = Math.random()*3;
+        if(Math.random()> .5)
+            speedY = -speedY;
+        
+        gl.bufferSubData(gl.ARRAY_BUFFER, 8, flatten(partPos));
+
+        particlesInMov.push(
+            {
+                currentPos: vec2(p.currentPos[0], p.currentPos[1]),
+                speed: vec2(speedX, speedY), 
+                startPos: partPos,
+                time: 0,
+                exploPart : true
+            });
+
+    }
+    //moveParticles(explosionParticles);
 }
 
 function particleOutOfRange(p)

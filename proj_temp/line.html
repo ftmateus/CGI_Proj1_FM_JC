@@ -1,27 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script id="vertex-shader" type="x-shader/x-vertex">
+<script id="vertex-shader-line" type="x-shader/x-vertex">
 attribute vec4 vPosition;
-uniform vec2 speed;
-uniform vec2 startPos;
-uniform bool isParticle;
-uniform float time;
 
 void main(){
-    gl_PointSize = 5.0;
-    if (isParticle)
-    {
-        gl_Position[0] += 0.1 * speed[0];
-        gl_Position[1] = startPos[1] + speed[1] * time - 0.5 *10.0 * time*time;
-    }
-    else
-    {
-        gl_Position = vPosition;
-    }
+    gl_Position = vPosition;
     
 }
 </script>
+<script id="vertex-shader-particles" type="x-shader/x-vertex">
+
+    attribute vec2 startPos;
+    attribute vec2 speed;
+    attribute float time;
+    uniform float global_time;
+    
+    void main(){
+        float timeTemp = global_time - time;
+        gl_PointSize = 5.0;
+        gl_Position.x += 0.1 * speed.x;
+        gl_Position.y = startPos.y + speed.y * timeTemp - 0.5 * 10.0 * timeTemp * timeTemp;
+    }
+    </script>
 
 <script id="fragment-shader" type="x-shader/x-fragment">
 precision mediump float;
