@@ -22,6 +22,8 @@ void main(){
         gl_PointSize = 5.0;
         gl_Position.x += 0.1 * speed.x;
         gl_Position.y = startPos.y + speed.y * timeTemp - 0.5 * 10.0 * timeTemp * timeTemp;
+        gl_Position.z = 0.0;
+        gl_Position.w = 1.0;
     }
     </script>
 
