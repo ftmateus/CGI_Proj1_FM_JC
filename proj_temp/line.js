@@ -7,7 +7,6 @@ var startPos;
 var endPos;
 var isDrawing = false;
 var currentPos = vec2(0,0);
-var particlesInMov = [];
 var speedLoc;
 var startPosLoc;
 var numParticles = 0;
@@ -45,24 +44,7 @@ window.onload = function init() {
     gl.enableVertexAttribArray(vPosition);
 
 
-    gl.useProgram(program_particles);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.bufferParticlesId);
-    var size = 65000*(2*4 + 2*4 + 4*2);
-    gl.bufferData(gl.ARRAY_BUFFER, size, gl.STATIC_DRAW);
-
-    startPosLoc = gl.getAttribLocation(program_particles, "startPos");
-    gl.vertexAttribPointer(startPosLoc, 2, gl.FLOAT, false,  (2*4 + 2*4 + 4), 0);
-    gl.enableVertexAttribArray(startPosLoc);
-
-    speedLoc = gl.getAttribLocation(this.program_particles, "speed");
-    gl.vertexAttribPointer(this.speedLoc, 2, gl.FLOAT, false, (2*4 + 2*4 + 4), 2*4);
-    gl.enableVertexAttribArray(speedLoc);
-
-    timeLoc = gl.getAttribLocation(this.program_particles, "time");
-    gl.vertexAttribPointer(this.timeLoc, 1, gl.FLOAT, false, (2*4 + 2*4 + 4), 2*4 +2*4);
-    gl.enableVertexAttribArray(this.timeLoc);
-    
-    this.global_timeLoc = gl.getUniformLocation(this.program_particles, "global_time");
+    loadParticlesProgram();
 
     canvas.addEventListener("mousedown",mouseDown);
     canvas.addEventListener("mouseup",mouseUp);
@@ -85,38 +67,38 @@ function mouseDown(ev) {
     gl.useProgram(program_line);
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferlineId);
 
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(startPos));
-    //gl.drawArrays(gl.POINTS, 0, 1);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten([startPos, endPos]));
 }
 
 function mouseUp(ev) {
     isDrawing = false;
-    numParticles++;
     endPos = getMousePos(canvas,ev);
+    
 
     gl.useProgram(program_line);
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferlineId);
-    
-    gl.bufferSubData(gl.ARRAY_BUFFER, 8, flatten(endPos));
+
     //considerando que o intervalo de tempo e 1 nas 2 componentes
     speedX = 0.5*(endPos[0] - startPos[0]);
     speedY = 10*(endPos[1] - startPos[1]);
 
     currentPos[0] = startPos[0];
 
+    data = flatten([startPos, vec2(speedX, speedY), 0]);
     gl.useProgram(program_particles);
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferParticlesId);
 
-    data = flatten([startPos, vec2(speedX, speedY)]);
+    gl.bufferSubData(gl.ARRAY_BUFFER, (numParticles)*(2*4 + 2*4 + 4), data);
+    numParticles++;
     //gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten([startPos[0], startPos[1], speedX, speedY, global_time]));
 }
 
 function mouseMove(ev) {
     endPos = getMousePos(canvas, ev);
     
-    //gl.useProgram(program_line);
-    //gl.bindBuffer(gl.ARRAY_BUFFER, bufferlineId);
-    //gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten([startPos,endPos]));   
+    gl.useProgram(program_line);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferlineId);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten([startPos,endPos]));   
 }
 
 
@@ -136,17 +118,18 @@ function drawLine()
 {
     gl.useProgram(program_line);
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferlineId);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten([startPos,endPos]));  
+    //gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten([startPos,endPos]));  
     gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.POINTS, 0, 1); 
     gl.drawArrays(gl.LINES, 0, 2); 
 }
 
-function moveParticles()
+function loadParticlesProgram()
 {
     gl.useProgram(program_particles);
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufferParticlesId);
-
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, data);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.bufferParticlesId);
+    var size = 65000*(2*4 + 2*4 + 4*2);
+    gl.bufferData(gl.ARRAY_BUFFER, size, gl.STATIC_DRAW);
 
     startPosLoc = gl.getAttribLocation(program_particles, "startPos");
     gl.vertexAttribPointer(startPosLoc, 2, gl.FLOAT, false,  (2*4 + 2*4 + 4), 0);
@@ -157,10 +140,27 @@ function moveParticles()
     gl.enableVertexAttribArray(speedLoc);
 
     timeLoc = gl.getAttribLocation(this.program_particles, "time");
-    gl.vertexAttribPointer  (this.timeLoc, 1, gl.FLOAT, false, (2*4 + 2*4 + 4), 2*4 +2*4);
+    gl.vertexAttribPointer(this.timeLoc, 1, gl.FLOAT, false, (2*4 + 2*4 + 4), 2*4 +2*4);
     gl.enableVertexAttribArray(this.timeLoc);
+    
+    this.global_timeLoc = gl.getUniformLocation(this.program_particles, "global_time");
+}
+
+function moveParticles()
+{
+    gl.useProgram(program_particles);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferParticlesId);
+    
+    gl.vertexAttribPointer(startPosLoc, 2, gl.FLOAT, false,  (2*4 + 2*4 + 4), 0);
+
+    gl.vertexAttribPointer(this.speedLoc, 2, gl.FLOAT, false, (2*4 + 2*4 + 4), 2*4);
+
+    gl.vertexAttribPointer(this.timeLoc, 1, gl.FLOAT, false, (2*4 + 2*4 + 4), 2*4 +2*4);
+
+
     global_time += 0.001; 
     gl.uniform1f(global_timeLoc, global_time);
     gl.drawArrays(gl.POINTS, 0, numParticles);
+    //console.log(numParticles);
     
 }
