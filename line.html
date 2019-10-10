@@ -61,7 +61,7 @@ void main() {
     {
         discard; //manda o pixel para fora
     }
-    gl_FragColor = vec4(1,1,1,1);
+    gl_FragColor = vec4(1,1,1,0.5);
 }
 </script>
 <script type="text/javascript" src="../Common/webgl-utils.js"></script>
@@ -70,12 +70,10 @@ void main() {
 <script type="text/javascript" src="line.js"></script>
 </head>
 <body>
-    <title>Line</title>
-    <canvas id="gl-canvas" width="1024" height="1024">
+    <title>Fireworks CGI</title>
+    <canvas id="gl-canvas" width="512" height="512">
         Oops... your browser doesn't support the HTML5 canvas element"
     </canvas>
-    <div id = "overlay">
-        <div><span id = "FPS"></span></div>
-    </div>
+    <p><span id = "numParticles"></span> particles</p>
 </body>
 </html>

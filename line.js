@@ -28,6 +28,10 @@ window.onload = function init() {
     canvas = document.getElementById("gl-canvas");
     gl = WebGLUtils.setupWebGL(canvas);
     if(!gl) { alert("WebGL isn't available"); }
+
+    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.DST_ALPHA, gl.ONE, gl.ONE);
+
+    gl.enable(gl.BLEND);
         
     gl.viewport(0,0,canvas.width, canvas.height);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -47,10 +51,7 @@ function keyPress(ev)
 {
     if (ev.key == ' ' || ev.key == 'Spacebar')
     {
-        if (automaticLaunchSet)
-            automaticLaunchSet = false;
-        else
-            automaticLaunchSet = true;
+        automaticLaunchSet = automaticLaunchSet ? false : true;
     }
     console.log(automaticLaunchSet);
 }
@@ -58,7 +59,7 @@ function keyPress(ev)
 function automaticLaunch()
 {
     var posX = Math.random() * (1 /*max*/  + 1 /*min*/) - 1 /*min*/;
-    createParticle([posX, -1], [posX, -0.3]);
+    createMortarParticle([posX, -1], [posX, -0.3]);
 }
 
 function initLineProgram()
@@ -113,10 +114,10 @@ function mouseUp(ev) {
     isDrawing = false;
     endPos = getMousePos(canvas,ev);
 
-    createParticle(startPos, endPos);
+    createMortarParticle(startPos, endPos);
 }
 
-function createParticle(startPos_i, endPos_i)
+function createMortarParticle(startPos_i, endPos_i)
 {
     //considerando que o intervalo de tempo e 1 nas 2 componentes
     var speedX = 5 *(endPos_i[0] - startPos_i[0]);
@@ -185,8 +186,10 @@ function render() {
     if(isDrawing)
         drawLine();
     moveParticles();
-    if(automaticLaunchSet)
+    if(automaticLaunchSet && global_time%1 <= 0.05)
         automaticLaunch();
+    
+    document.getElementById('numParticles').innerHTML=numParticles;
     
     requestAnimFrame(render);
 }
