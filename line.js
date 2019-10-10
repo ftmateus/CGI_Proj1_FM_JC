@@ -10,6 +10,7 @@ var vPositionAttrib;
 var global_timeLoc;
 var global_time = 0;
 var numParticles = 0;
+var automaticLaunchSet = false;
 
 const NUM_PARTICLES = 65000;
 const FLOAT_SIZE = 4;
@@ -37,8 +38,27 @@ window.onload = function init() {
     canvas.addEventListener("mousedown",mouseDown);
     canvas.addEventListener("mouseup",mouseUp);
     canvas.addEventListener("mousemove",mouseMove);
+    addEventListener("keypress", keyPress);
 
     render();
+}
+
+function keyPress(ev)
+{
+    if (ev.key == ' ' || ev.key == 'Spacebar')
+    {
+        if (automaticLaunchSet)
+            automaticLaunchSet = false;
+        else
+            automaticLaunchSet = true;
+    }
+    console.log(automaticLaunchSet);
+}
+
+function automaticLaunch()
+{
+    var posX = Math.random() * (1 /*max*/  + 1 /*min*/) - 1 /*min*/;
+    createParticle([posX, -1], [posX, -0.3]);
 }
 
 function initLineProgram()
@@ -93,9 +113,14 @@ function mouseUp(ev) {
     isDrawing = false;
     endPos = getMousePos(canvas,ev);
 
+    createParticle(startPos, endPos);
+}
+
+function createParticle(startPos_i, endPos_i)
+{
     //considerando que o intervalo de tempo e 1 nas 2 componentes
-    var speedX = 5 *(endPos[0] - startPos[0]);
-    var speedY = 8 *(endPos[1] - startPos[1]);
+    var speedX = 5 *(endPos_i[0] - startPos_i[0]);
+    var speedY = 7 *(endPos_i[1] - startPos_i[1]);
 
     var explosion_time =  speedY/10.0;
     
@@ -109,7 +134,7 @@ function mouseUp(ev) {
         var exploSpeedX = Math.random() * Math.cos(theta);
         var exploSpeedY = Math.random()* Math.sin(theta);
 
-        var particle_data = new Float32Array([startPos[0], startPos[1], speedX, speedY, exploSpeedX, exploSpeedY, global_time, explosion_time]);
+        var particle_data = new Float32Array([startPos_i[0], startPos_i[1], speedX, speedY, exploSpeedX, exploSpeedY, global_time, explosion_time]);
         gl.bufferSubData(gl.ARRAY_BUFFER, (numParticles)*PARTICLE_STRIDE, particle_data);
 
         if (++numParticles >= NUM_PARTICLES)
@@ -160,6 +185,8 @@ function render() {
     if(isDrawing)
         drawLine();
     moveParticles();
+    if(automaticLaunchSet)
+        automaticLaunch();
     
     requestAnimFrame(render);
 }
