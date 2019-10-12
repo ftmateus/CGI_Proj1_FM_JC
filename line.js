@@ -110,7 +110,6 @@ function initParticlesProgram()
     timeAttrib = gl.getAttribLocation(program_particles, "time");    
     firstExplosionAttrib = gl.getAttribLocation(program_particles, "firstExploTime");
     vColor_particle = gl.getAttribLocation(program_particles, "vColor_particle");
-    //console.log(vColor_particle);
     global_timeLoc = gl.getUniformLocation(program_particles, "global_time");
     
 
@@ -235,7 +234,7 @@ function moveParticles()
 
 function randomColor()
 {
-    currentColor = vec4(colors[Math.ceil(Math.random()*(colors.length-1))]);
+    currentColor = vec4(colors[Math.floor(Math.random()*(colors.length))]);
 }
 
 function automaticLaunch()
