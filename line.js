@@ -12,16 +12,18 @@ var global_time = 0;
 var numParticles = 0;
 var automaticLaunchSet = false;
 var colors = [
-    vec4( 1.0, 0.0, 0.0, 1.0),  // red
-    vec4( 1.0, 1.0, 0.0, 1.0),  // yellow
-    vec4( 0.0, 1.0, 0.0, 1.0),  // green
-    vec4( 0.0, 0.0, 1.0, 1.0),  // blue
-    vec4( 1.0, 0.0, 1.0, 1.0),  // magenta
-    vec4( 0.0, 1.0, 1.0, 1.0)   // cyan
+    vec4( 1.0, 0.0, 0.0, 0.5),  // red
+    vec4( 1.0, 1.0, 0.0, 0.5),  // yellow
+    vec4( 0.0, 1.0, 0.0, 0.5),  // green
+    vec4( 0.0, 0.0, 1.0, 0.5),  // blue
+    vec4( 1.0, 0.0, 1.0, 0.5),  // magenta
+    vec4( 0.0, 1.0, 1.0, 0.5)   // cyan
 ];
 var currentColor;
 var vColor_line;
 var vColor_particle;
+var time_increase = 0.005;
+var isPaused = false;
 
 const NUM_PARTICLES = 65000;
 const COLOR_SIZE = 16;
@@ -55,23 +57,30 @@ window.onload = function init() {
     canvas.addEventListener("mouseup",mouseUp);
     canvas.addEventListener("mousemove",mouseMove);
     addEventListener("keypress", keyPress);
+    document.getElementById("slowMotion").onclick = function() {slowMotion()};
+    document.getElementById("pause").onclick = function() {pause()};
 
     render();
+}
+
+function slowMotion()
+{
+    time_increase = time_increase == 0.005 ? 0.0005 : 0.005;
+    document.getElementsByClassName("slowMotionStyle")[0].style.backgroundColor = time_increase == 0.0005 ? "red" : "white";
+
+}
+
+function pause()
+{
+    isPaused = isPaused ? false : true;
+    document.getElementsByClassName("pauseStyle")[0].style.backgroundColor = isPaused ? "red" : "white";
+
 }
 
 function keyPress(ev)
 {
     if (ev.key == ' ' || ev.key == 'Spacebar')
-    {
         automaticLaunchSet = automaticLaunchSet ? false : true;
-    }
-}
-
-function automaticLaunch()
-{
-    var posX = Math.random() * (1 /*max*/  + 1 /*min*/) - 1 /*min*/;
-    randomColor();
-    createMortarParticle([posX, -1], [posX, -0.3]);
 }
 
 function initLineProgram()
@@ -113,11 +122,6 @@ function getMousePos(canvas, ev) {
     return vec2(x,y);    
 }
 
-function randomColor()
-{
-    currentColor = vec4(colors[Math.ceil(Math.random()*(colors.length-1))]);
-}
-
 function mouseDown(ev) {
     isDrawing = true;
     startPos = getMousePos(canvas, ev);
@@ -148,6 +152,8 @@ function createMortarParticle(startPos_i, endPos_i)
     var speedX = 5 *(endPos_i[0] - startPos_i[0]);
     var speedY = 7 *(endPos_i[1] - startPos_i[1]);
     var explosion_time = speedY/10.0;    
+    if (explosion_time < 0)
+        explosion_time = 0;
     var i = 0;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferParticlesId);
@@ -221,9 +227,22 @@ function moveParticles()
     gl.vertexAttribPointer(vColor_particle, 4, gl.FLOAT, false, PARTICLE_STRIDE, STARTPOS_SIZE + SPEED_SIZE + SPEED_SIZE + SPEED_SIZE + TIME_SIZE + TIME_SIZE);   
     gl.enableVertexAttribArray(vColor_particle);
 
-    global_time += 0.005; 
+    if (!isPaused)
+        global_time += time_increase; 
     gl.uniform1f(global_timeLoc, global_time);
-    gl.drawArrays(gl.POINTS, 0, numParticles);
+    gl.drawArrays(gl.POINTS, 0, NUM_PARTICLES);
+}
+
+function randomColor()
+{
+    currentColor = vec4(colors[Math.ceil(Math.random()*(colors.length-1))]);
+}
+
+function automaticLaunch()
+{
+    var posX = Math.random() * (1 /*max*/  + 1 /*min*/) - 1 /*min*/;
+    randomColor();
+    createMortarParticle([posX, -1], [posX, -0.3]);
 }
 
 function render() {
@@ -232,7 +251,7 @@ function render() {
     if(isDrawing)
         drawLine();
     moveParticles();
-    if(automaticLaunchSet && global_time%1 <= 0.05)
+    if(automaticLaunchSet && global_time%1 <= time_increase*10)
         automaticLaunch();
     
     document.getElementById('numParticles').innerHTML=numParticles;
