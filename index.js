@@ -40,6 +40,7 @@ STARTPOS_SIZE + SPEED_SIZE + EXPLOSPEED_SIZE + EXPLOSPEED_SIZE + TIME_SIZE + FIR
 
 window.onload = function init() {
     canvas = document.getElementById("gl-canvas");
+
     gl = WebGLUtils.setupWebGL(canvas);
     if(!gl) { alert("WebGL isn't available"); }
 
@@ -60,7 +61,23 @@ window.onload = function init() {
     document.getElementById("slowMotion").onclick = function() {slowMotion()};
     document.getElementById("pause").onclick = function() {pause()};
 
+    fit_canvas_to_window();
+
     render();
+}
+
+function fit_canvas_to_window()
+{
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight * 0.8;
+
+    aspect = canvas.width / canvas.height;
+    gl.viewport(0, 0,canvas.width, canvas.height);
+
+}
+
+window.onresize = function () {
+    fit_canvas_to_window();
 }
 
 function slowMotion()
@@ -85,7 +102,7 @@ function keyPress(ev)
 
 function initLineProgram()
 {
-    program_line = initShaders(gl, "vertex-shader-line", "fragment-shader");
+    program_line = initShaders(gl, "shaders/vertex-shader-line.glsl", "shaders/fragment-shader.glsl");
     bufferlineId = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferlineId);
     gl.bufferData(gl.ARRAY_BUFFER, 4*4 + 4*4 + 4*4, gl.STATIC_DRAW);
@@ -95,7 +112,7 @@ function initLineProgram()
 
 function initParticlesProgram()
 {
-    program_particles = initShaders(gl, "vertex-shader-particles", "fragment-shader");
+    program_particles = initShaders(gl, "shaders/vertex-shader-particles.glsl", "shaders/fragment-shader.glsl");
 
     bufferParticlesId = gl.createBuffer();
 
